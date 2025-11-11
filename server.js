@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
+const Joi = require("joi");
 const app = express();
 app.use(express.static("public"));
 app.use(express.json());
@@ -101,6 +102,48 @@ app.get("/api/houses/:id", (req, res) => {
     const house = houses.find((house) => house._id === parseInt(req.params.id));
     res.send(house);
 });
+
+app.post("/api/houses", upload.single("img"), (req,res) => {
+    console.log("in post request");
+    const result = validateHouse(req.body);
+
+    if (result.error) {
+        console.log("I have an error");
+        res.status(400).send(result.error.details[0].message);
+        return;
+    }
+
+    const house = {
+        _id: houses.length,
+        name:req.body.name,
+        size:req.body.size,
+        bedrooms:req.body.bedrooms,
+        bathrooms:req.body.bathrooms,
+    };
+
+    //adding image
+    if (req.file) {
+        house.main_image = req.file.filename;
+    }
+
+    houses.push(house);
+    res.status(200).send(house);
+});
+
+const validateHouse = (house) => {
+    // Schema - validation library, ensures everything is conforming
+    // to proper data
+    const schema = Joi.object({
+        _id:Joi.allow(""),
+        name:Joi.string().min(3).required(),
+        size:Joi.number().required().min(0),
+        bedrooms:Joi.number().required().min(0),
+        bathrooms:Joi.number().required().min(0),
+
+    });
+
+    return schema.validate(house);
+};
 
 app.listen(3001, () => {
     console.log("Server is up and running");
