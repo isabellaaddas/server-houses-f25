@@ -145,6 +145,48 @@ const validateHouse = (house) => {
     return schema.validate(house);
 };
 
+app.put("/api/houses/:id", upload.single("img"), (req, res) => {
+    const house = houses.find((h) => h._id === parseInt(req.params.id));
+
+    if (!house) {
+        res.status(404).send("The house you want to edit cannot be found.");
+        return;
+    }
+
+    const isValidUpdate = validateHouse(req.body);
+
+    if (isValidUpdate.error) {
+        console.log("Invalid Info");
+        res.status(400).send(isValidUpdate.error.details[0].message);
+        return;
+    }
+
+    house.name = req.body.name;
+    house.description = req.body.description;
+    house.size = req.body.size;
+    house.bathrooms = req.body.bathrooms;
+    house.bedrooms = req.body.bedrooms;
+
+    if (req.file) {
+        house.main_image = req.file.filename;
+    }
+
+    res.status(200).send(house);
+});
+
+app.delete("/api/houses/:id", (req, res) => {
+    const house = houses.find((h) => h._id === parseInt(req.params.id));
+
+    if (!house) {
+        res.status(404).send("The house you want to delete cannot be found.");
+        return;
+    }
+    
+    const index = houses.indexOf(house);
+    houses.splice(index, 1);
+    res.status(200).send(house);
+});
+
 app.listen(3001, () => {
     console.log("Server is up and running");
 });
